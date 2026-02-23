@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="primary_color">#6200EE</color>
+    <color name="primary_light">#9B6EFF</color>
+    <color name="primary_dark">#3700B3</color>
+    <color name="accent_color">#03DAC5</color>
+
+    <color name="price_color">#4CAF50</color>
+    <color name="price_light">#80E27E</color>
+    <color name="price_dark">#087F23</color>
+
+    <color name="error_color">#B00020</color>
+    <color name="error_light">#FF5252</color>
+
+    <color name="light_background">#F5F5F5</color>
+    <color name="light_surface">#FFFFFF</color>
+    <color name="light_card">#FFFFFF</color>
+
+    <color name="dark_background">#121212</color>
+    <color name="dark_surface">#1E1E1E</color>
+    <color name="dark_card">#2D2D2D</color>
+    <color name="dark_elevated">#383838</color>
+
+    <color name="light_text_primary">#212121</color>
+    <color name="light_text_secondary">#757575</color>
+    <color name="light_text_hint">#9E9E9E</color>
+
+    <color name="dark_text_primary">#FFFFFF</color>
+    <color name="dark_text_secondary">#B0B0B0</color>
+    <color name="dark_text_hint">#808080</color>
+
+    <color name="light_gray">#E0E0E0</color>
+    <color name="medium_gray">#9E9E9E</color>
+    <color name="dark_gray">#616161</color>
+    <color name="gray">#757575</color>
+
+    <color name="orange_accent">#FF9800</color>
+    <color name="blue_accent">#2196F3</color>
+    <color name="purple_accent">#9C27B0</color>
+    <color name="success_green">#4CAF50</color>
+    <color name="warning_yellow">#FFC107</color>
+
+    <color name="primary_transparent">#806200EE</color>
+    <color name="black_transparent">#80000000</color>
+    <color name="white_transparent">#80FFFFFF</color>
+
+    <color name="white">#FFFFFF</color>
+    <color name="black">#000000</color>
+
+    <color name="background_light">#F5F5F5</color>
+    <color name="text_primary">#212121</color>
+    <color name="blue_primary">#6200EE</color>
+</resources>

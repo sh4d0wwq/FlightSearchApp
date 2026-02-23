@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Поиск авиабилетов</string>
+
+    <string name="search_flights">Поиск авиабилетов</string>
+    <string name="find_best_flights">Найдите лучшие авиабилеты</string>
+    <string name="flight_details">Детали рейса</string>
+    <string name="settings">Настройки</string>
+    <string name="saved_searches">Сохраненные поиски</string>
+
+    <string name="from">Откуда</string>
+    <string name="to">Куда</string>
+    <string name="departure_date">Дата вылета</string>
+    <string name="price">Цена</string>
+
+    <string name="search">Поиск</string>
+    <string name="save">Сохранить</string>
+    <string name="save_search">Сохранить поиск</string>
+    <string name="edit">Редактировать</string>
+    <string name="delete">Удалить</string>
+    <string name="cancel">Отмена</string>
+    <string name="back">Назад</string>
+
+    <string name="no_saved_searches">У вас пока нет сохраненных поисков</string>
+    <string name="fill_all_fields">Пожалуйста, заполните все поля</string>
+    <string name="search_saved">Поиск сохранен</string>
+    <string name="search_deleted">Поиск удален</string>
+    <string name="delete_search">Удалить поиск</string>
+    <string name="edit_search">Редактировать поиск</string>
+    <string name="restart_app">Настройки языка применятся после перезапуска приложения</string>
+
+    <string name="theme">Тема</string>
+    <string name="language">Язык</string>
+    <string name="light">Светлая</string>
+    <string name="dark">Темная</string>
+    <string name="system_default">Системная</string>
+    <string name="about">О приложении</string>
+
+    <string name="from_city">Откуда</string>
+    <string name="to_city">Куда</string>
+    <string name="select_date">Выберите дату</string>
+    <string name="confirm">Подтвердить</string>
+    <string name="yes">Да</string>
+    <string name="no">Нет</string>
+    <string name="ok">ОК</string>
+    <string name="error">Ошибка</string>
+    <string name="success">Успешно</string>
+    <string name="loading">Загрузка…</string>
+    <string name="retry">Повторить</string>
+</resources>
