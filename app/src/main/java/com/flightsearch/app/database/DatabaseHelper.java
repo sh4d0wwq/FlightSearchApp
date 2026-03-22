@@ -12,16 +12,24 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class DatabaseHelper extends SQLiteOpenHelper {
+
     private static final String DATABASE_NAME = "FlightSearchDB";
-    private static final int DATABASE_VERSION = 1;
+    private static final int DATABASE_VERSION = 2;
 
-    private static final String TABLE_SEARCHES = "saved_searches";
+    private static final String TABLE_FLIGHTS = "saved_searches";
 
-    private static final String COLUMN_ID = "id";
-    private static final String COLUMN_FROM_CITY = "from_city";
-    private static final String COLUMN_TO_CITY = "to_city";
-    private static final String COLUMN_DEPARTURE_DATE = "departure_date";
-    private static final String COLUMN_PRICE = "price";
+    private static final String COL_ID = "id";
+    private static final String COL_FROM = "from_city";
+    private static final String COL_TO = "to_city";
+    private static final String COL_DATE = "departure_date";
+    private static final String COL_PRICE = "price";
+    private static final String COL_AIRLINE = "airline";
+    private static final String COL_AIRLINE_NAME = "airline_name";
+    private static final String COL_FLIGHT_NUMBER = "flight_number";
+    private static final String COL_DEP_TIME = "departure_time";
+    private static final String COL_ARR_TIME = "arrival_time";
+    private static final String COL_DURATION = "duration";
+    private static final String COL_STOPS = "stops";
 
     public DatabaseHelper(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
@@ -29,109 +37,134 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
     @Override
     public void onCreate(SQLiteDatabase db) {
-        String CREATE_TABLE = "CREATE TABLE " + TABLE_SEARCHES + "("
-                + COLUMN_ID + " INTEGER PRIMARY KEY AUTOINCREMENT,"
-                + COLUMN_FROM_CITY + " TEXT NOT NULL,"
-                + COLUMN_TO_CITY + " TEXT NOT NULL,"
-                + COLUMN_DEPARTURE_DATE + " TEXT NOT NULL,"
-                + COLUMN_PRICE + " TEXT"
-                + ")";
-        db.execSQL(CREATE_TABLE);
+        db.execSQL("CREATE TABLE " + TABLE_FLIGHTS + " (" +
+                COL_ID + " INTEGER PRIMARY KEY AUTOINCREMENT," +
+                COL_FROM + " TEXT NOT NULL," +
+                COL_TO + " TEXT NOT NULL," +
+                COL_DATE + " TEXT NOT NULL," +
+                COL_PRICE + " TEXT," +
+                COL_AIRLINE + " TEXT," +
+                COL_AIRLINE_NAME + " TEXT," +
+                COL_FLIGHT_NUMBER + " TEXT," +
+                COL_DEP_TIME + " TEXT," +
+                COL_ARR_TIME + " TEXT," +
+                COL_DURATION + " TEXT," +
+                COL_STOPS + " INTEGER DEFAULT 0" +
+                ")");
     }
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        db.execSQL("DROP TABLE IF EXISTS " + TABLE_SEARCHES);
-        onCreate(db);
+        if (oldVersion < 2) {
+            db.execSQL("ALTER TABLE " + TABLE_FLIGHTS + " ADD COLUMN " + COL_AIRLINE + " TEXT");
+            db.execSQL("ALTER TABLE " + TABLE_FLIGHTS + " ADD COLUMN " + COL_AIRLINE_NAME + " TEXT");
+            db.execSQL("ALTER TABLE " + TABLE_FLIGHTS + " ADD COLUMN " + COL_FLIGHT_NUMBER + " TEXT");
+            db.execSQL("ALTER TABLE " + TABLE_FLIGHTS + " ADD COLUMN " + COL_DEP_TIME + " TEXT");
+            db.execSQL("ALTER TABLE " + TABLE_FLIGHTS + " ADD COLUMN " + COL_ARR_TIME + " TEXT");
+            db.execSQL("ALTER TABLE " + TABLE_FLIGHTS + " ADD COLUMN " + COL_DURATION + " TEXT");
+            db.execSQL("ALTER TABLE " + TABLE_FLIGHTS + " ADD COLUMN " + COL_STOPS + " INTEGER DEFAULT 0");
+        }
     }
 
-    public long addSearch(FlightSearch search) {
-        SQLiteDatabase db = this.getWritableDatabase();
-        ContentValues values = new ContentValues();
-        values.put(COLUMN_FROM_CITY, search.getFromCity());
-        values.put(COLUMN_TO_CITY, search.getToCity());
-        values.put(COLUMN_DEPARTURE_DATE, search.getDepartureDate());
-        values.put(COLUMN_PRICE, search.getPrice());
-
-        long id = db.insert(TABLE_SEARCHES, null, values);
+    public long addSearch(FlightSearch flight) {
+        SQLiteDatabase db = getWritableDatabase();
+        ContentValues values = buildValues(flight);
+        long id = db.insert(TABLE_FLIGHTS, null, values);
         db.close();
         return id;
     }
 
     public FlightSearch getSearch(long id) {
-        SQLiteDatabase db = this.getReadableDatabase();
-        Cursor cursor = db.query(TABLE_SEARCHES,
-                new String[]{COLUMN_ID, COLUMN_FROM_CITY, COLUMN_TO_CITY, COLUMN_DEPARTURE_DATE, COLUMN_PRICE},
-                COLUMN_ID + "=?",
-                new String[]{String.valueOf(id)},
+        SQLiteDatabase db = getReadableDatabase();
+        Cursor c = db.query(TABLE_FLIGHTS, null,
+                COL_ID + "=?", new String[]{String.valueOf(id)},
                 null, null, null);
-
-        FlightSearch search = null;
-        if (cursor.moveToFirst()) {
-            search = new FlightSearch(
-                    cursor.getLong(cursor.getColumnIndexOrThrow(COLUMN_ID)),
-                    cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_FROM_CITY)),
-                    cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_TO_CITY)),
-                    cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_DEPARTURE_DATE)),
-                    cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_PRICE))
-            );
-            cursor.close();
+        FlightSearch result = null;
+        if (c.moveToFirst()) {
+            result = fromCursor(c);
         }
+        c.close();
         db.close();
-        return search;
+        return result;
     }
 
     public List<FlightSearch> getAllSearches() {
-        List<FlightSearch> searches = new ArrayList<>();
-        String selectQuery = "SELECT * FROM " + TABLE_SEARCHES + " ORDER BY " + COLUMN_ID + " DESC";
-
-        SQLiteDatabase db = this.getReadableDatabase();
-        Cursor cursor = null;
-
+        List<FlightSearch> list = new ArrayList<>();
+        SQLiteDatabase db = getReadableDatabase();
+        Cursor c = null;
         try {
-            cursor = db.rawQuery(selectQuery, null);
-
-            if (cursor.moveToFirst()) {
-                do {
-                    FlightSearch search = new FlightSearch();
-                    search.setId(cursor.getLong(cursor.getColumnIndexOrThrow(COLUMN_ID)));
-                    search.setFromCity(cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_FROM_CITY)));
-                    search.setToCity(cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_TO_CITY)));
-                    search.setDepartureDate(cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_DEPARTURE_DATE)));
-                    search.setPrice(cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_PRICE)));
-                    searches.add(search);
-                } while (cursor.moveToNext());
+            c = db.rawQuery("SELECT * FROM " + TABLE_FLIGHTS + " ORDER BY " + COL_ID + " DESC", null);
+            if (c.moveToFirst()) {
+                do { list.add(fromCursor(c)); } while (c.moveToNext());
             }
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
-            if (cursor != null) {
-                cursor.close();
-            }
+            if (c != null) c.close();
             db.close();
         }
-        return searches;
+        return list;
     }
 
-    public int updateSearch(FlightSearch search) {
-        SQLiteDatabase db = this.getWritableDatabase();
-        ContentValues values = new ContentValues();
-        values.put(COLUMN_FROM_CITY, search.getFromCity());
-        values.put(COLUMN_TO_CITY, search.getToCity());
-        values.put(COLUMN_DEPARTURE_DATE, search.getDepartureDate());
-        values.put(COLUMN_PRICE, search.getPrice());
-
-        int rowsAffected = db.update(TABLE_SEARCHES, values,
-                COLUMN_ID + " = ?",
-                new String[]{String.valueOf(search.getId())});
+    public int updateSearch(FlightSearch flight) {
+        SQLiteDatabase db = getWritableDatabase();
+        int rows = db.update(TABLE_FLIGHTS, buildValues(flight),
+                COL_ID + "=?", new String[]{String.valueOf(flight.getId())});
         db.close();
-        return rowsAffected;
+        return rows;
     }
 
     public void deleteSearch(long id) {
-        SQLiteDatabase db = this.getWritableDatabase();
-        db.delete(TABLE_SEARCHES, COLUMN_ID + " = ?", new String[]{String.valueOf(id)});
+        SQLiteDatabase db = getWritableDatabase();
+        db.delete(TABLE_FLIGHTS, COL_ID + "=?", new String[]{String.valueOf(id)});
         db.close();
     }
 
+    private ContentValues buildValues(FlightSearch f) {
+        ContentValues v = new ContentValues();
+        v.put(COL_FROM, f.getFromCity());
+        v.put(COL_TO, f.getToCity());
+        v.put(COL_DATE, f.getDepartureDate());
+        v.put(COL_PRICE, f.getPrice());
+        v.put(COL_AIRLINE, f.getAirline());
+        v.put(COL_AIRLINE_NAME, f.getAirlineName());
+        v.put(COL_FLIGHT_NUMBER, f.getFlightNumber());
+        v.put(COL_DEP_TIME, f.getDepartureTime());
+        v.put(COL_ARR_TIME, f.getArrivalTime());
+        v.put(COL_DURATION, f.getDuration());
+        v.put(COL_STOPS, f.getStops());
+        return v;
+    }
+
+    private FlightSearch fromCursor(Cursor c) {
+        FlightSearch f = new FlightSearch();
+        f.setId(c.getLong(c.getColumnIndexOrThrow(COL_ID)));
+        f.setFromCity(c.getString(c.getColumnIndexOrThrow(COL_FROM)));
+        f.setToCity(c.getString(c.getColumnIndexOrThrow(COL_TO)));
+        f.setDepartureDate(c.getString(c.getColumnIndexOrThrow(COL_DATE)));
+        f.setPrice(c.getString(c.getColumnIndexOrThrow(COL_PRICE)));
+
+        int airlineIdx = c.getColumnIndex(COL_AIRLINE);
+        if (airlineIdx >= 0) f.setAirline(c.getString(airlineIdx));
+
+        int airlineNameIdx = c.getColumnIndex(COL_AIRLINE_NAME);
+        if (airlineNameIdx >= 0) f.setAirlineName(c.getString(airlineNameIdx));
+
+        int flightNumIdx = c.getColumnIndex(COL_FLIGHT_NUMBER);
+        if (flightNumIdx >= 0) f.setFlightNumber(c.getString(flightNumIdx));
+
+        int depTimeIdx = c.getColumnIndex(COL_DEP_TIME);
+        if (depTimeIdx >= 0) f.setDepartureTime(c.getString(depTimeIdx));
+
+        int arrTimeIdx = c.getColumnIndex(COL_ARR_TIME);
+        if (arrTimeIdx >= 0) f.setArrivalTime(c.getString(arrTimeIdx));
+
+        int durationIdx = c.getColumnIndex(COL_DURATION);
+        if (durationIdx >= 0) f.setDuration(c.getString(durationIdx));
+
+        int stopsIdx = c.getColumnIndex(COL_STOPS);
+        if (stopsIdx >= 0) f.setStops(c.getInt(stopsIdx));
+
+        return f;
+    }
 }

@@ -3,41 +3,40 @@
     <string name="app_name">Поиск авиабилетов</string>
 
     <string name="search_flights">Поиск авиабилетов</string>
-    <string name="find_best_flights">Найдите лучшие авиабилеты</string>
+    <string name="find_best_flights">Найдите лучшие предложения</string>
     <string name="flight_details">Детали рейса</string>
     <string name="settings">Настройки</string>
-    <string name="saved_searches">Сохраненные поиски</string>
+    <string name="saved_flights">Сохранённые рейсы</string>
 
     <string name="from">Откуда</string>
     <string name="to">Куда</string>
     <string name="departure_date">Дата вылета</string>
     <string name="price">Цена</string>
 
-    <string name="search">Поиск</string>
+    <string name="search">Найти рейсы</string>
     <string name="save">Сохранить</string>
-    <string name="save_search">Сохранить поиск</string>
-    <string name="edit">Редактировать</string>
+    <string name="save_flight">Сохранить рейс</string>
     <string name="delete">Удалить</string>
     <string name="cancel">Отмена</string>
     <string name="back">Назад</string>
 
-    <string name="no_saved_searches">У вас пока нет сохраненных поисков</string>
+    <string name="no_saved_flights">Нет сохранённых рейсов.\nНайдите рейс и добавьте его в закладки!</string>
     <string name="fill_all_fields">Пожалуйста, заполните все поля</string>
-    <string name="search_saved">Поиск сохранен</string>
-    <string name="search_deleted">Поиск удален</string>
-    <string name="delete_search">Удалить поиск</string>
-    <string name="edit_search">Редактировать поиск</string>
+    <string name="flight_saved">Рейс сохранён!</string>
+    <string name="flight_deleted">Рейс удалён</string>
+    <string name="delete_flight">Удалить рейс</string>
+    <string name="confirm_delete_flight">Вы уверены, что хотите удалить сохранённый рейс?</string>
     <string name="restart_app">Настройки языка применятся после перезапуска приложения</string>
 
     <string name="theme">Тема</string>
     <string name="language">Язык</string>
     <string name="light">Светлая</string>
-    <string name="dark">Темная</string>
+    <string name="dark">Тёмная</string>
     <string name="system_default">Системная</string>
     <string name="about">О приложении</string>
 
-    <string name="from_city">Откуда</string>
-    <string name="to_city">Куда</string>
+    <string name="from_city">Откуда (город или код аэропорта)</string>
+    <string name="to_city">Куда (город или код аэропорта)</string>
     <string name="select_date">Выберите дату</string>
     <string name="confirm">Подтвердить</string>
     <string name="yes">Да</string>
@@ -47,4 +46,52 @@
     <string name="success">Успешно</string>
     <string name="loading">Загрузка…</string>
     <string name="retry">Повторить</string>
+
+    <!-- Lab 2: API + результаты -->
+    <string name="flight_results">Результаты поиска</string>
+    <string name="loading_flights">Поиск рейсов…</string>
+    <string name="no_results">Рейсы не найдены.\nПопробуйте другие даты или города.</string>
+    <string name="stops_direct">Прямой</string>
+    <string name="stops_one">1 пересадка</string>
+    <string name="stops_format">%d пересадки</string>
+    <string name="departure_arrival">Вылет / Прилёт</string>
+    <string name="duration_stops">Длительность · Пересадки</string>
+
+    <!-- Lab 2: Сеть / офлайн -->
+    <string name="offline_message">⚠ Нет интернета · Погода в пункте назначения недоступна</string>
+    <string name="from_cache_note">⚠ Результаты из кеша (цены могут устареть)</string>
+    <string name="mock_data_note">ℹ Расчётные рейсы — для будущих дат используются типовые расписания</string>
+    <string name="network_error">Ошибка сети. Проверьте подключение.</string>
+
+    <!-- Погода (Open-Meteo API, бесплатно, без ключа) -->
+    <string name="weather_at_destination">Погода в пункте назначения</string>
+    <string name="weather_loading">Загрузка погоды…</string>
+    <string name="weather_source">Данные: Open-Meteo · open-meteo.com</string>
+    <string name="weather_temp_format">↑%d°C  ↓%d°C</string>
+    <string name="weather_precip_format">💧 %d%%</string>
+    <string name="weather_city_not_found">Город не найден</string>
+    <string name="weather_unavailable">Данные о погоде недоступны</string>
+    <string name="weather_no_data">Нет прогноза на эту дату</string>
+    <!-- Описания погоды WMO -->
+    <string name="weather_clear">Ясно</string>
+    <string name="weather_partly_cloudy">Переменная облачность</string>
+    <string name="weather_overcast">Пасмурно</string>
+    <string name="weather_foggy">Туман</string>
+    <string name="weather_drizzle">Морось</string>
+    <string name="weather_rainy">Дождь</string>
+    <string name="weather_snowy">Снег</string>
+    <string name="weather_showers">Ливень</string>
+    <string name="weather_snow_showers">Снегопад</string>
+    <string name="weather_thunderstorm">Гроза</string>
+    <string name="weather_variable">Переменно</string>
+
+    <!-- Обратная совместимость -->
+    <string name="saved_searches">Сохранённые рейсы</string>
+    <string name="save_search">Сохранить рейс</string>
+    <string name="search_saved">Рейс сохранён!</string>
+    <string name="search_deleted">Рейс удалён</string>
+    <string name="delete_search">Удалить рейс</string>
+    <string name="edit_search">Редактировать</string>
+    <string name="edit">Редактировать</string>
+    <string name="no_saved_searches">Нет сохранённых рейсов</string>
 </resources>

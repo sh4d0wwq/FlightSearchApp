@@ -10,7 +10,8 @@
     app:cardElevation="4dp"
     app:cardBackgroundColor="?attr/colorSurface"
     app:strokeColor="@color/light_gray"
-    app:strokeWidth="1dp">
+    app:strokeWidth="1dp"
+    android:foreground="?android:attr/selectableItemBackground">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -20,12 +21,12 @@
         android:gravity="center_vertical">
 
         <ImageView
-            android:layout_width="48dp"
-            android:layout_height="48dp"
-            android:src="@drawable/ic_plane"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
+            android:src="@drawable/ic_bookmark"
             android:background="@drawable/circle_background"
-            android:padding="12dp"
-            android:layout_marginEnd="16dp"
+            android:padding="10dp"
+            android:layout_marginEnd="14dp"
             app:tint="@color/primary_color" />
 
         <LinearLayout
@@ -38,21 +39,32 @@
                 android:id="@+id/textViewRoute"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textSize="18sp"
+                android:textSize="17sp"
                 android:textStyle="bold"
                 android:textColor="?android:textColorPrimary"
-                android:layout_marginBottom="4dp"
+                android:layout_marginBottom="2dp"
                 tools:text="Moscow → Paris" />
+
+            <TextView
+                android:id="@+id/textViewAirline"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="13sp"
+                android:textColor="@color/primary_color"
+                android:textStyle="bold"
+                android:visibility="gone"
+                tools:text="Aeroflot · SU 1234" />
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
-                android:gravity="center_vertical">
+                android:gravity="center_vertical"
+                android:layout_marginTop="4dp">
 
                 <ImageView
-                    android:layout_width="14dp"
-                    android:layout_height="14dp"
+                    android:layout_width="13dp"
+                    android:layout_height="13dp"
                     android:src="@drawable/ic_calendar"
                     android:layout_marginEnd="4dp"
                     app:tint="?android:textColorSecondary" />
@@ -61,34 +73,45 @@
                     android:id="@+id/textViewDate"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:textSize="14sp"
+                    android:textSize="13sp"
                     android:textColor="?android:textColorSecondary"
-                    android:layout_marginEnd="16dp"
+                    android:layout_marginEnd="12dp"
                     tools:text="2024-03-20" />
 
-                <ImageView
-                    android:layout_width="14dp"
-                    android:layout_height="14dp"
-                    android:src="@drawable/ic_price"
-                    android:layout_marginEnd="4dp"
-                    app:tint="@color/price_color" />
-
                 <TextView
-                    android:id="@+id/textViewPrice"
+                    android:id="@+id/textViewTimes"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:textSize="16sp"
-                    android:textStyle="bold"
-                    android:textColor="@color/price_color"
-                    tools:text="$500" />
+                    android:textSize="13sp"
+                    android:textColor="?android:textColorSecondary"
+                    android:visibility="gone"
+                    tools:text="10:00 → 12:30" />
             </LinearLayout>
         </LinearLayout>
 
-        <ImageView
-            android:layout_width="24dp"
-            android:layout_height="24dp"
-            android:src="@drawable/ic_arrow_right"
-            app:tint="?android:textColorSecondary" />
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="end|center_vertical">
+
+            <TextView
+                android:id="@+id/textViewPrice"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:textColor="@color/price_color"
+                tools:text="USD 250.00" />
+
+            <ImageView
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:src="@drawable/ic_arrow_right"
+                android:layout_marginTop="4dp"
+                android:layout_gravity="end"
+                app:tint="?android:textColorSecondary" />
+        </LinearLayout>
 
     </LinearLayout>
 </com.google.android.material.card.MaterialCardView>

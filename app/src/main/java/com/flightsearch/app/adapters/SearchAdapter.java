@@ -16,12 +16,12 @@ import java.util.List;
 
 public class SearchAdapter extends RecyclerView.Adapter<SearchAdapter.SearchViewHolder> {
 
-    private List<FlightSearch> searches = new ArrayList<>();
+    private List<FlightSearch> flights = new ArrayList<>();
     private final OnItemClickListener listener;
 
     public interface OnItemClickListener {
-        void onItemClick(FlightSearch search);
-        void onItemLongClick(FlightSearch search);
+        void onItemClick(FlightSearch flight);
+        void onItemLongClick(FlightSearch flight);
     }
 
     public SearchAdapter(OnItemClickListener listener) {
@@ -38,67 +38,77 @@ public class SearchAdapter extends RecyclerView.Adapter<SearchAdapter.SearchView
 
     @Override
     public void onBindViewHolder(@NonNull SearchViewHolder holder, int position) {
-        holder.bind(searches.get(position));
+        holder.bind(flights.get(position));
     }
 
     @Override
     public int getItemCount() {
-        return searches.size();
+        return flights.size();
     }
 
-    public void submitList(List<FlightSearch> newSearches) {
-        this.searches = newSearches != null ? newSearches : new ArrayList<>();
+    public void submitList(List<FlightSearch> newFlights) {
+        this.flights = newFlights != null ? newFlights : new ArrayList<>();
         notifyDataSetChanged();
     }
 
     static class SearchViewHolder extends RecyclerView.ViewHolder {
-        private final TextView textViewRoute;
-        private final TextView textViewDate;
-        private final TextView textViewPrice;
+
+        private final TextView tvRoute;
+        private final TextView tvDate;
+        private final TextView tvPrice;
+        private final TextView tvAirline;
+        private final TextView tvTimes;
         private final OnItemClickListener listener;
 
-        public SearchViewHolder(@NonNull View itemView, OnItemClickListener listener) {
+        SearchViewHolder(@NonNull View itemView, OnItemClickListener listener) {
             super(itemView);
             this.listener = listener;
-            textViewRoute = itemView.findViewById(R.id.textViewRoute);
-            textViewDate = itemView.findViewById(R.id.textViewDate);
-            textViewPrice = itemView.findViewById(R.id.textViewPrice);
+            tvRoute = itemView.findViewById(R.id.textViewRoute);
+            tvDate = itemView.findViewById(R.id.textViewDate);
+            tvPrice = itemView.findViewById(R.id.textViewPrice);
+            tvAirline = itemView.findViewById(R.id.textViewAirline);
+            tvTimes = itemView.findViewById(R.id.textViewTimes);
         }
 
-        public void bind(FlightSearch search) {
-            if (search != null) {
-                String from = search.getFromCity();
-                String to = search.getToCity();
-                String route = from + " → " + to;
-                textViewRoute.setText(route);
+        void bind(FlightSearch flight) {
+            if (flight == null) return;
 
-                String date = search.getDepartureDate();
-                textViewDate.setText(date);
+            tvRoute.setText(flight.getFromCity() + " → " + flight.getToCity());
+            tvDate.setText(flight.getDepartureDate() != null ? flight.getDepartureDate() : "");
+            tvPrice.setText(flight.getPrice() != null ? flight.getPrice() : "");
 
-                String price = search.getPrice();
-                if (price != null) {
-                    if (!price.startsWith("$")) {
-                        price = "$" + price;
-                    }
+            String airline = flight.getAirlineName();
+            if (airline == null || airline.isEmpty()) airline = flight.getAirline();
+            if (tvAirline != null) {
+                if (airline != null && !airline.isEmpty()) {
+                    tvAirline.setText(airline);
+                    tvAirline.setVisibility(View.VISIBLE);
                 } else {
-                    price = "";
+                    tvAirline.setVisibility(View.GONE);
                 }
-                textViewPrice.setText(price);
-
-                itemView.setOnClickListener(v -> {
-                    if (listener != null) {
-                        listener.onItemClick(search);
-                    }
-                });
-
-                itemView.setOnLongClickListener(v -> {
-                    if (listener != null) {
-                        listener.onItemLongClick(search);
-                        return true;
-                    }
-                    return false;
-                });
             }
+
+            if (tvTimes != null) {
+                String dep = flight.getDepartureTime();
+                String arr = flight.getArrivalTime();
+                if (dep != null && !dep.isEmpty() && arr != null && !arr.isEmpty()) {
+                    tvTimes.setText(dep + " → " + arr);
+                    tvTimes.setVisibility(View.VISIBLE);
+                } else {
+                    tvTimes.setVisibility(View.GONE);
+                }
+            }
+
+            itemView.setOnClickListener(v -> {
+                if (listener != null) listener.onItemClick(flight);
+            });
+            itemView.setOnLongClickListener(v -> {
+                if (listener != null) {
+                    listener.onItemLongClick(flight);
+                    return true;
+                }
+                return false;
+            });
         }
     }
 }
