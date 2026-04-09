@@ -1,11 +1,23 @@
 package com.flightsearch.app;
 
+import android.Manifest;
 import android.app.DatePickerDialog;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
+import android.widget.Spinner;
+import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -16,20 +28,27 @@ import com.flightsearch.app.database.DatabaseHelper;
 import com.flightsearch.app.models.FlightOffer;
 import com.flightsearch.app.models.FlightSearch;
 import com.flightsearch.app.repository.FlightRepository;
+import com.flightsearch.app.utils.OfferSort;
+import com.flightsearch.app.utils.SavedFlightsQuery;
 import com.flightsearch.app.viewmodel.FlightViewModel;
 import com.flightsearch.app.viewmodel.FlightViewModelFactory;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.card.MaterialCardView;
+import com.google.android.material.chip.Chip;
+import com.google.android.material.chip.ChipGroup;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.gson.Gson;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 import java.util.Locale;
 
 public class MainActivity extends BaseActivity {
+
+    private static final int REQ_POST_NOTIFICATIONS = 1001;
 
     private TextInputEditText editTextFrom;
     private TextInputEditText editTextTo;
@@ -44,9 +63,15 @@ public class MainActivity extends BaseActivity {
     private MaterialCardView cardOfflineBanner;
     private View dividerSections;
     private RecyclerView recyclerViewResults;
+    private Spinner spinnerOfferSort;
 
     private RecyclerView recyclerViewSavedSearches;
     private MaterialCardView cardViewNoSearches;
+    private TextView tvNoSavedMessage;
+    private TextInputEditText editFilterSaved;
+    private Chip chipDirectOnly;
+    private ChipGroup chipGroupCategory;
+    private Spinner spinnerSavedSort;
 
     private FlightViewModel viewModel;
     private FlightOfferAdapter offerAdapter;
@@ -55,17 +80,39 @@ public class MainActivity extends BaseActivity {
     private Calendar calendar;
     private SimpleDateFormat dateFormat;
 
+    private List<FlightOffer> lastOffers = new ArrayList<>();
+    private List<FlightSearch> allSavedCached = new ArrayList<>();
+
+    private int offerSortIndex;
+    private int savedSortIndex;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        maybeRequestNotificationPermission();
         initViews();
+        setupSavedFilterUi();
         setupDatePicker();
         setupRecyclerViews();
         setupViewModel();
         setupListeners();
         loadSavedFlights();
+    }
+
+    private void maybeRequestNotificationPermission() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return;
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
+                == PackageManager.PERMISSION_GRANTED) return;
+        ActivityCompat.requestPermissions(this,
+                new String[]{Manifest.permission.POST_NOTIFICATIONS}, REQ_POST_NOTIFICATIONS);
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
+                                           @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
     }
 
     private void initViews() {
@@ -82,14 +129,67 @@ public class MainActivity extends BaseActivity {
         cardOfflineBanner = findViewById(R.id.cardOfflineBanner);
         dividerSections = findViewById(R.id.dividerSections);
         recyclerViewResults = findViewById(R.id.recyclerViewResults);
+        spinnerOfferSort = findViewById(R.id.spinnerOfferSort);
 
         recyclerViewSavedSearches = findViewById(R.id.recyclerViewSavedSearches);
         cardViewNoSearches = findViewById(R.id.cardViewNoSearches);
+        tvNoSavedMessage = findViewById(R.id.tvNoSavedMessage);
+        editFilterSaved = findViewById(R.id.editFilterSaved);
+        chipDirectOnly = findViewById(R.id.chipDirectOnly);
+        chipGroupCategory = findViewById(R.id.chipGroupCategory);
+        spinnerSavedSort = findViewById(R.id.spinnerSavedSort);
 
         databaseHelper = new DatabaseHelper(this);
         calendar = Calendar.getInstance();
         dateFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
         editTextDepartureDate.setText(dateFormat.format(calendar.getTime()));
+
+        ArrayAdapter<CharSequence> offerAd = ArrayAdapter.createFromResource(this,
+                R.array.offer_sort_labels, android.R.layout.simple_spinner_dropdown_item);
+        spinnerOfferSort.setAdapter(offerAd);
+        spinnerOfferSort.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                offerSortIndex = position;
+                applyOfferSort();
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) { }
+        });
+
+        ArrayAdapter<CharSequence> savedAd = ArrayAdapter.createFromResource(this,
+                R.array.saved_sort_labels, android.R.layout.simple_spinner_dropdown_item);
+        spinnerSavedSort.setAdapter(savedAd);
+        spinnerSavedSort.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                savedSortIndex = position;
+                applySavedFilters();
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) { }
+        });
+    }
+
+    private void setupSavedFilterUi() {
+        editFilterSaved.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) { }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                applySavedFilters();
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) { }
+        });
+
+        chipDirectOnly.setOnCheckedChangeListener((b, c) -> applySavedFilters());
+
+        chipGroupCategory.setOnCheckedChangeListener((group, checkedId) -> applySavedFilters());
     }
 
     private void setupDatePicker() {
@@ -146,8 +246,10 @@ public class MainActivity extends BaseActivity {
         viewModel.isOffline.observe(this, offline ->
                 cardOfflineBanner.setVisibility(offline ? View.VISIBLE : View.GONE));
 
-        viewModel.flightOffers.observe(this, offers ->
-                offerAdapter.submitList(offers));
+        viewModel.flightOffers.observe(this, offers -> {
+            lastOffers = offers != null ? new ArrayList<>(offers) : new ArrayList<>();
+            applyOfferSort();
+        });
 
         viewModel.hasResults.observe(this, has -> {
             layoutResultsSection.setVisibility(has ? View.VISIBLE : View.GONE);
@@ -172,6 +274,69 @@ public class MainActivity extends BaseActivity {
                 dividerSections.setVisibility(View.VISIBLE);
             }
         });
+    }
+
+    private void applyOfferSort() {
+        OfferSort.OfferSortOption opt;
+        switch (offerSortIndex) {
+            case 1:
+                opt = OfferSort.OfferSortOption.PRICE_DESC;
+                break;
+            case 2:
+                opt = OfferSort.OfferSortOption.DURATION_ASC;
+                break;
+            case 3:
+                opt = OfferSort.OfferSortOption.STOPS_ASC;
+                break;
+            case 0:
+            default:
+                opt = OfferSort.OfferSortOption.PRICE_ASC;
+                break;
+        }
+        offerAdapter.submitList(OfferSort.sort(lastOffers, opt));
+    }
+
+    private SavedFlightsQuery.SortOption savedSortOption() {
+        switch (savedSortIndex) {
+            case 1:
+                return SavedFlightsQuery.SortOption.DATE_ASC;
+            case 2:
+                return SavedFlightsQuery.SortOption.PRICE_ASC;
+            case 3:
+                return SavedFlightsQuery.SortOption.PRICE_DESC;
+            case 4:
+                return SavedFlightsQuery.SortOption.ROUTE_AZ;
+            case 0:
+            default:
+                return SavedFlightsQuery.SortOption.DATE_DESC;
+        }
+    }
+
+    private String selectedCategoryFilterKey() {
+        int id = chipGroupCategory.getCheckedChipId();
+        if (id == R.id.chipCatLeisure) return "leisure";
+        if (id == R.id.chipCatBusiness) return "business";
+        if (id == R.id.chipCatFamily) return "family";
+        return null;
+    }
+
+    private void applySavedFilters() {
+        String q = editFilterSaved.getText() != null ? editFilterSaved.getText().toString().trim() : "";
+        boolean direct = chipDirectOnly.isChecked();
+        String cat = selectedCategoryFilterKey();
+        List<FlightSearch> filtered = SavedFlightsQuery.apply(
+                allSavedCached, q, cat, direct, savedSortOption());
+
+        boolean noData = allSavedCached.isEmpty();
+        boolean noMatch = !noData && filtered.isEmpty();
+        cardViewNoSearches.setVisibility(noData || noMatch ? View.VISIBLE : View.GONE);
+        recyclerViewSavedSearches.setVisibility(noData || noMatch ? View.GONE : View.VISIBLE);
+        if (tvNoSavedMessage != null) {
+            tvNoSavedMessage.setText(noData
+                    ? getString(R.string.no_saved_flights)
+                    : getString(R.string.no_filter_results));
+        }
+        savedAdapter.submitList(noMatch ? new ArrayList<>() : filtered);
     }
 
     private void setupListeners() {
@@ -202,15 +367,13 @@ public class MainActivity extends BaseActivity {
     }
 
     private void loadSavedFlights() {
-        List<FlightSearch> saved = databaseHelper.getAllSearches();
-        boolean empty = saved == null || saved.isEmpty();
-        cardViewNoSearches.setVisibility(empty ? View.VISIBLE : View.GONE);
-        recyclerViewSavedSearches.setVisibility(empty ? View.GONE : View.VISIBLE);
-        if (!empty) savedAdapter.submitList(saved);
+        allSavedCached = databaseHelper.getAllSearches();
+        if (allSavedCached == null) allSavedCached = new ArrayList<>();
+        applySavedFilters();
     }
 
     private void showNote(String text) {
-        android.widget.TextView tv = cardCacheNote.findViewById(R.id.tvCacheNote);
+        TextView tv = cardCacheNote.findViewById(R.id.tvCacheNote);
         if (tv != null) tv.setText(text);
         cardCacheNote.setVisibility(View.VISIBLE);
     }

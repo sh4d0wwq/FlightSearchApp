@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="trip_category_keys">
+        <item>leisure</item>
+        <item>business</item>
+        <item>family</item>
+    </string-array>
+    <string-array name="trip_category_labels">
+        <item>@string/cat_leisure</item>
+        <item>@string/cat_business</item>
+        <item>@string/cat_family</item>
+    </string-array>
+    <string-array name="saved_sort_labels">
+        <item>@string/sort_date_desc</item>
+        <item>@string/sort_date_asc</item>
+        <item>@string/sort_price_asc</item>
+        <item>@string/sort_price_desc</item>
+        <item>@string/sort_route_az</item>
+    </string-array>
+    <string-array name="offer_sort_labels">
+        <item>@string/sort_offer_price_asc</item>
+        <item>@string/sort_offer_price_desc</item>
+        <item>@string/sort_offer_duration</item>
+        <item>@string/sort_offer_stops</item>
+    </string-array>
+    <string-array name="reminder_hours_labels">
+        <item>1</item>
+        <item>6</item>
+        <item>12</item>
+        <item>24</item>
+        <item>48</item>
+        <item>72</item>
+    </string-array>
+</resources>

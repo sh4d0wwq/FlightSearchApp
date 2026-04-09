@@ -23,6 +23,9 @@ build/
 # Local configuration file (sdk path, etc)
 local.properties
 
+# temp npm probe (ImageKit SDK)
+/ikcheck/
+
 # Android Studio
 .idea/
 *.iml

@@ -18,6 +18,9 @@ public class FlightSearch {
     private String duration;
     private int stops;
 
+    private String tripCategory;
+    private String imageUrl;
+
     public FlightSearch() {}
 
     public FlightSearch(String fromCity, String toCity, String departureDate, String price) {
@@ -70,6 +73,12 @@ public class FlightSearch {
 
     public int getStops() { return stops; }
     public void setStops(int stops) { this.stops = stops; }
+
+    public String getTripCategory() { return tripCategory; }
+    public void setTripCategory(String tripCategory) { this.tripCategory = tripCategory; }
+
+    public String getImageUrl() { return imageUrl; }
+    public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
 
     @Override
     public boolean equals(Object o) {

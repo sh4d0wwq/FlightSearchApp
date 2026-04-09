@@ -3,9 +3,14 @@ package com.flightsearch.app;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.MenuItem;
+import android.widget.ArrayAdapter;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
+import android.widget.Spinner;
 import android.widget.Toast;
+
+import com.flightsearch.app.prefs.AppPreferences;
+import com.google.android.material.switchmaterial.SwitchMaterial;
 
 public class SettingsActivity extends BaseActivity {
     private RadioGroup radioGroupTheme;
@@ -16,6 +21,9 @@ public class SettingsActivity extends BaseActivity {
     private RadioGroup radioGroupLanguage;
     private RadioButton radioEnglish;
     private RadioButton radioRussian;
+
+    private SwitchMaterial switchReminders;
+    private Spinner spinnerReminderHours;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -41,6 +49,13 @@ public class SettingsActivity extends BaseActivity {
         radioGroupLanguage = findViewById(R.id.radioGroupLanguage);
         radioEnglish = findViewById(R.id.radioEnglish);
         radioRussian = findViewById(R.id.radioRussian);
+
+        switchReminders = findViewById(R.id.switchReminders);
+        spinnerReminderHours = findViewById(R.id.spinnerReminderHours);
+
+        ArrayAdapter<CharSequence> h = ArrayAdapter.createFromResource(this,
+                R.array.reminder_hours_labels, android.R.layout.simple_spinner_dropdown_item);
+        spinnerReminderHours.setAdapter(h);
     }
 
     private void loadCurrentSettings() {
@@ -62,6 +77,18 @@ public class SettingsActivity extends BaseActivity {
             radioRussian.setChecked(true);
         } else {
             radioEnglish.setChecked(true);
+        }
+
+        switchReminders.setChecked(AppPreferences.isRemindersEnabled(this));
+        int hours = AppPreferences.getReminderHoursBefore(this);
+        String[] opts = getResources().getStringArray(R.array.reminder_hours_labels);
+        for (int i = 0; i < opts.length; i++) {
+            try {
+                if (Integer.parseInt(opts[i]) == hours) {
+                    spinnerReminderHours.setSelection(i);
+                    break;
+                }
+            } catch (NumberFormatException ignored) { }
         }
     }
 
@@ -97,6 +124,22 @@ public class SettingsActivity extends BaseActivity {
                 startActivity(intent);
                 finish();
             }
+        });
+
+        switchReminders.setOnCheckedChangeListener((v, checked) ->
+                AppPreferences.setRemindersEnabled(this, checked));
+
+        spinnerReminderHours.setOnItemSelectedListener(new android.widget.AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(android.widget.AdapterView<?> parent, android.view.View view, int position, long id) {
+                try {
+                    int h = Integer.parseInt(parent.getItemAtPosition(position).toString());
+                    AppPreferences.setReminderHoursBefore(SettingsActivity.this, h);
+                } catch (NumberFormatException ignored) { }
+            }
+
+            @Override
+            public void onNothingSelected(android.widget.AdapterView<?> parent) { }
         });
     }
 

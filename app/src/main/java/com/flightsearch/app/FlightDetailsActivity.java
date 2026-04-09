@@ -2,14 +2,22 @@ package com.flightsearch.app;
 
 import android.app.AlertDialog;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.ArrayAdapter;
+import android.widget.ImageView;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
+
+import com.bumptech.glide.Glide;
 import com.flightsearch.app.api.GeocodingResponse;
 import com.flightsearch.app.api.GeocodingService;
 import com.flightsearch.app.api.RetrofitClient;
@@ -22,6 +30,9 @@ import com.flightsearch.app.database.WeatherCacheEntity;
 import com.flightsearch.app.models.FlightOffer;
 import com.flightsearch.app.models.FlightSearch;
 import com.flightsearch.app.models.WeatherInfo;
+import com.flightsearch.app.notifications.FlightReminderScheduler;
+import com.flightsearch.app.remote.ImageKitUploader;
+import com.flightsearch.app.remote.RemoteFlightRepository;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.card.MaterialCardView;
 import com.google.gson.Gson;
@@ -51,6 +62,15 @@ public class FlightDetailsActivity extends BaseActivity {
     private MaterialButton buttonSave;
     private MaterialButton buttonDelete;
 
+    private MaterialCardView cardTripExtras;
+    private View layoutOfferExtras;
+    private View layoutSavedMeta;
+    private Spinner spinnerTripCategory;
+    private MaterialButton buttonAttachImage;
+    private ImageView imagePreview;
+    private TextView tvSavedCategory;
+    private ImageView imageSavedPhoto;
+
     private MaterialCardView cardWeather;
     private TextView tvWeatherCity;
     private View layoutWeatherLoading;
@@ -69,12 +89,22 @@ public class FlightDetailsActivity extends BaseActivity {
     private FlightOffer currentOffer;
     private boolean isFromSaved;
 
+    private Uri pendingImageUri;
+    private ActivityResultLauncher<String> pickImageLauncher;
+
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        pickImageLauncher = registerForActivityResult(new ActivityResultContracts.GetContent(), uri -> {
+            pendingImageUri = uri;
+            if (uri != null && imagePreview != null) {
+                imagePreview.setImageURI(uri);
+                imagePreview.setVisibility(View.VISIBLE);
+            }
+        });
         setContentView(R.layout.activity_flight_details);
 
         if (getSupportActionBar() != null) {
@@ -102,6 +132,15 @@ public class FlightDetailsActivity extends BaseActivity {
         buttonSave            = findViewById(R.id.buttonSave);
         buttonDelete          = findViewById(R.id.buttonDelete);
 
+        cardTripExtras        = findViewById(R.id.cardTripExtras);
+        layoutOfferExtras     = findViewById(R.id.layoutOfferExtras);
+        layoutSavedMeta       = findViewById(R.id.layoutSavedMeta);
+        spinnerTripCategory   = findViewById(R.id.spinnerTripCategory);
+        buttonAttachImage     = findViewById(R.id.buttonAttachImage);
+        imagePreview          = findViewById(R.id.imagePreview);
+        tvSavedCategory       = findViewById(R.id.tvSavedCategory);
+        imageSavedPhoto       = findViewById(R.id.imageSavedPhoto);
+
         cardWeather           = findViewById(R.id.cardWeather);
         tvWeatherCity         = findViewById(R.id.tvWeatherCity);
         layoutWeatherLoading  = findViewById(R.id.layoutWeatherLoading);
@@ -111,6 +150,10 @@ public class FlightDetailsActivity extends BaseActivity {
         tvWeatherTemp         = findViewById(R.id.tvWeatherTemp);
         tvWeatherPrecip       = findViewById(R.id.tvWeatherPrecip);
         tvWeatherError        = findViewById(R.id.tvWeatherError);
+
+        ArrayAdapter<CharSequence> catAd = ArrayAdapter.createFromResource(this,
+                R.array.trip_category_labels, android.R.layout.simple_spinner_dropdown_item);
+        spinnerTripCategory.setAdapter(catAd);
     }
 
     private void loadFlightData() {
@@ -149,6 +192,12 @@ public class FlightDetailsActivity extends BaseActivity {
         textViewFlightNumber.setText(nvl(offer.getFlightNumber(), ""));
         textViewTimes.setText(formatTimes(offer.getDepartureTime(), offer.getArrivalTime()));
         textViewDurationStops.setText(formatDurationStops(offer.getDuration(), offer.getStops()));
+
+        cardTripExtras.setVisibility(View.VISIBLE);
+        layoutOfferExtras.setVisibility(View.VISIBLE);
+        layoutSavedMeta.setVisibility(View.GONE);
+        pendingImageUri = null;
+        imagePreview.setVisibility(View.GONE);
     }
 
     private void displayFromSaved(FlightSearch flight) {
@@ -162,22 +211,93 @@ public class FlightDetailsActivity extends BaseActivity {
         textViewFlightNumber.setText(nvl(flight.getFlightNumber(), ""));
         textViewTimes.setText(formatTimes(flight.getDepartureTime(), flight.getArrivalTime()));
         textViewDurationStops.setText(formatDurationStops(flight.getDuration(), flight.getStops()));
+
+        String cat = flight.getTripCategory();
+        String url = flight.getImageUrl();
+        boolean showCard = (cat != null && !cat.isEmpty()) || (url != null && !url.isEmpty());
+        cardTripExtras.setVisibility(showCard ? View.VISIBLE : View.GONE);
+        layoutOfferExtras.setVisibility(View.GONE);
+        layoutSavedMeta.setVisibility(showCard ? View.VISIBLE : View.GONE);
+        if (showCard) {
+            if (cat != null && !cat.isEmpty()) {
+                tvSavedCategory.setVisibility(View.VISIBLE);
+                tvSavedCategory.setText(getString(R.string.trip_category) + ": " + categoryLabel(cat));
+            } else {
+                tvSavedCategory.setVisibility(View.GONE);
+            }
+            if (url != null && !url.isEmpty()) {
+                imageSavedPhoto.setVisibility(View.VISIBLE);
+                Glide.with(this).load(url).centerCrop().into(imageSavedPhoto);
+            } else {
+                imageSavedPhoto.setVisibility(View.GONE);
+            }
+        }
+    }
+
+    private String categoryLabel(String key) {
+        if ("business".equalsIgnoreCase(key)) return getString(R.string.cat_business);
+        if ("family".equalsIgnoreCase(key)) return getString(R.string.cat_family);
+        if ("leisure".equalsIgnoreCase(key)) return getString(R.string.cat_leisure);
+        return key;
     }
 
     private void setupListeners() {
         buttonSave.setOnClickListener(v -> saveFlight());
         buttonDelete.setOnClickListener(v -> confirmDelete());
+        buttonAttachImage.setOnClickListener(v -> pickImageLauncher.launch("image/*"));
     }
 
     private void saveFlight() {
         if (currentOffer == null) return;
-        long id = databaseHelper.addSearch(currentOffer.toFlightSearch());
+        FlightSearch fs = currentOffer.toFlightSearch();
+        String[] keys = getResources().getStringArray(R.array.trip_category_keys);
+        int pos = spinnerTripCategory.getSelectedItemPosition();
+        if (pos >= 0 && pos < keys.length) fs.setTripCategory(keys[pos]);
+
+        long id = databaseHelper.addSearch(fs);
         if (id > 0) {
+            fs.setId(id);
+            FlightReminderScheduler.schedule(this, id, fs.getFromCity(), fs.getToCity(),
+                    fs.getDepartureDate(), fs.getDepartureTime());
+            RemoteFlightRepository.syncSavedFlight(this, fs);
+            tryUploadImageAfterSave(id, fs);
             Toast.makeText(this, R.string.flight_saved, Toast.LENGTH_SHORT).show();
             buttonSave.setVisibility(View.GONE);
         } else {
             Toast.makeText(this, R.string.error, Toast.LENGTH_SHORT).show();
         }
+    }
+
+    private void tryUploadImageAfterSave(long localId, FlightSearch fs) {
+        if (pendingImageUri == null) return;
+        RemoteFlightRepository.uploadFlightImageAsync(this, localId, pendingImageUri, url -> {
+            if (url != null) {
+                databaseHelper.updateImageUrl(localId, url);
+                fs.setImageUrl(url);
+                RemoteFlightRepository.patchImageUrlInFirestore(this, localId, url);
+                Toast.makeText(FlightDetailsActivity.this, R.string.image_uploaded, Toast.LENGTH_SHORT).show();
+                return;
+            }
+            executor.execute(() -> {
+                try {
+                    String ik = ImageKitUploader.uploadImage(FlightDetailsActivity.this,
+                            pendingImageUri, "flight_" + localId + ".jpg");
+                    if (ik != null) {
+                        databaseHelper.updateImageUrl(localId, ik);
+                        fs.setImageUrl(ik);
+                        RemoteFlightRepository.patchImageUrlInFirestore(FlightDetailsActivity.this, localId, ik);
+                        mainHandler.post(() -> Toast.makeText(FlightDetailsActivity.this,
+                                R.string.image_uploaded, Toast.LENGTH_SHORT).show());
+                    } else {
+                        mainHandler.post(() -> Toast.makeText(FlightDetailsActivity.this,
+                                R.string.image_upload_failed, Toast.LENGTH_SHORT).show());
+                    }
+                } catch (Exception e) {
+                    mainHandler.post(() -> Toast.makeText(FlightDetailsActivity.this,
+                            R.string.image_upload_failed, Toast.LENGTH_SHORT).show());
+                }
+            });
+        });
     }
 
     private void confirmDelete() {
@@ -186,6 +306,8 @@ public class FlightDetailsActivity extends BaseActivity {
                 .setMessage(R.string.confirm_delete_flight)
                 .setPositiveButton(R.string.delete, (d, w) -> {
                     if (currentSaved != null) {
+                        FlightReminderScheduler.cancel(this, currentSaved.getId());
+                        RemoteFlightRepository.deleteRemote(this, currentSaved.getId());
                         databaseHelper.deleteSearch(currentSaved.getId());
                         Toast.makeText(this, R.string.flight_deleted, Toast.LENGTH_SHORT).show();
                         finish();

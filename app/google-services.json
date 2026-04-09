@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "554528181971",
+    "project_id": "flightsearch-f119d",
+    "storage_bucket": "flightsearch-f119d.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:554528181971:android:9f1d94ff1431a682ee0e26",
+        "android_client_info": {
+          "package_name": "com.flightsearch.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDVGbHab75FKbHj1si6hgl0XkTovqfXhuM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

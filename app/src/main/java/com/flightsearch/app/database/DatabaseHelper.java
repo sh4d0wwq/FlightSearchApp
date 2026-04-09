@@ -14,7 +14,7 @@ import java.util.List;
 public class DatabaseHelper extends SQLiteOpenHelper {
 
     private static final String DATABASE_NAME = "FlightSearchDB";
-    private static final int DATABASE_VERSION = 2;
+    private static final int DATABASE_VERSION = 3;
 
     private static final String TABLE_FLIGHTS = "saved_searches";
 
@@ -30,6 +30,8 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     private static final String COL_ARR_TIME = "arrival_time";
     private static final String COL_DURATION = "duration";
     private static final String COL_STOPS = "stops";
+    private static final String COL_TRIP_CATEGORY = "trip_category";
+    private static final String COL_IMAGE_URL = "image_url";
 
     public DatabaseHelper(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
@@ -49,7 +51,9 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                 COL_DEP_TIME + " TEXT," +
                 COL_ARR_TIME + " TEXT," +
                 COL_DURATION + " TEXT," +
-                COL_STOPS + " INTEGER DEFAULT 0" +
+                COL_STOPS + " INTEGER DEFAULT 0," +
+                COL_TRIP_CATEGORY + " TEXT," +
+                COL_IMAGE_URL + " TEXT" +
                 ")");
     }
 
@@ -63,6 +67,10 @@ public class DatabaseHelper extends SQLiteOpenHelper {
             db.execSQL("ALTER TABLE " + TABLE_FLIGHTS + " ADD COLUMN " + COL_ARR_TIME + " TEXT");
             db.execSQL("ALTER TABLE " + TABLE_FLIGHTS + " ADD COLUMN " + COL_DURATION + " TEXT");
             db.execSQL("ALTER TABLE " + TABLE_FLIGHTS + " ADD COLUMN " + COL_STOPS + " INTEGER DEFAULT 0");
+        }
+        if (oldVersion < 3) {
+            db.execSQL("ALTER TABLE " + TABLE_FLIGHTS + " ADD COLUMN " + COL_TRIP_CATEGORY + " TEXT");
+            db.execSQL("ALTER TABLE " + TABLE_FLIGHTS + " ADD COLUMN " + COL_IMAGE_URL + " TEXT");
         }
     }
 
@@ -114,6 +122,14 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         return rows;
     }
 
+    public void updateImageUrl(long id, String imageUrl) {
+        SQLiteDatabase db = getWritableDatabase();
+        ContentValues v = new ContentValues();
+        v.put(COL_IMAGE_URL, imageUrl);
+        db.update(TABLE_FLIGHTS, v, COL_ID + "=?", new String[]{String.valueOf(id)});
+        db.close();
+    }
+
     public void deleteSearch(long id) {
         SQLiteDatabase db = getWritableDatabase();
         db.delete(TABLE_FLIGHTS, COL_ID + "=?", new String[]{String.valueOf(id)});
@@ -133,6 +149,8 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         v.put(COL_ARR_TIME, f.getArrivalTime());
         v.put(COL_DURATION, f.getDuration());
         v.put(COL_STOPS, f.getStops());
+        v.put(COL_TRIP_CATEGORY, f.getTripCategory());
+        v.put(COL_IMAGE_URL, f.getImageUrl());
         return v;
     }
 
@@ -164,6 +182,12 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
         int stopsIdx = c.getColumnIndex(COL_STOPS);
         if (stopsIdx >= 0) f.setStops(c.getInt(stopsIdx));
+
+        int catIdx = c.getColumnIndex(COL_TRIP_CATEGORY);
+        if (catIdx >= 0) f.setTripCategory(c.getString(catIdx));
+
+        int imgIdx = c.getColumnIndex(COL_IMAGE_URL);
+        if (imgIdx >= 0) f.setImageUrl(c.getString(imgIdx));
 
         return f;
     }
