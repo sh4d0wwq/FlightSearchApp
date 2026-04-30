@@ -129,4 +129,34 @@
     <string name="chip_cat_leisure">Отдых</string>
     <string name="chip_cat_business">Командировка</string>
     <string name="chip_cat_family">Семья</string>
+
+    <string name="auth_title">Вход</string>
+    <string name="auth_subtitle">Зарегистрируйтесь или войдите, чтобы синхронизировать рейсы с Firestore.</string>
+    <string name="auth_email">Электронная почта</string>
+    <string name="auth_password">Пароль</string>
+    <string name="auth_sign_in">Войти</string>
+    <string name="auth_register">Регистрация</string>
+    <string name="auth_fill_fields">Введите email и пароль</string>
+    <string name="auth_password_length">Пароль не короче 6 символов</string>
+    <string name="auth_registered">Аккаунт создан</string>
+    <string name="auth_failed">Ошибка входа</string>
+    <string name="settings_account">Аккаунт</string>
+    <string name="settings_signed_in_as">Вы вошли как</string>
+    <string name="settings_not_signed_in">Не выполнен вход</string>
+    <string name="sign_out">Выйти</string>
+
+    <string name="device_apis_title">Устройство</string>
+    <string name="accelerometer_label">Акселерометр (м/с²)</string>
+    <string name="accelerometer_unavailable">Акселерометр недоступен</string>
+    <string name="accelerometer_waiting">Наклоните устройство…</string>
+    <string name="accelerometer_values">x: %1$.2f · y: %2$.2f · z: %3$.2f</string>
+    <string name="location_label">Геолокация</string>
+    <string name="location_tap_button">Нажмите кнопку для координат GPS</string>
+    <string name="location_unavailable">Геолокация недоступна</string>
+    <string name="use_location_for_from">Подставить координаты в «Откуда»</string>
+
+    <string name="share_flight">Поделиться</string>
+    <string name="share_flight_template">%1$s → %2$s\nДата: %3$s\nЦена: %4$s</string>
+    <string name="take_photo">Снять фото</string>
+    <string name="camera_error">Не удалось открыть камеру</string>
 </resources>

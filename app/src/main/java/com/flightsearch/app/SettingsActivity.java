@@ -3,14 +3,19 @@ package com.flightsearch.app;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.MenuItem;
+import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.Spinner;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.flightsearch.app.prefs.AppPreferences;
+import com.google.android.material.button.MaterialButton;
 import com.google.android.material.switchmaterial.SwitchMaterial;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 
 public class SettingsActivity extends BaseActivity {
     private RadioGroup radioGroupTheme;
@@ -25,6 +30,9 @@ public class SettingsActivity extends BaseActivity {
     private SwitchMaterial switchReminders;
     private Spinner spinnerReminderHours;
 
+    private TextView tvAccountStatus;
+    private MaterialButton buttonSignOut;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -37,7 +45,14 @@ public class SettingsActivity extends BaseActivity {
 
         initializeViews();
         loadCurrentSettings();
+        bindAccountUi();
         setupListeners();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        bindAccountUi();
     }
 
     private void initializeViews() {
@@ -56,6 +71,21 @@ public class SettingsActivity extends BaseActivity {
         ArrayAdapter<CharSequence> h = ArrayAdapter.createFromResource(this,
                 R.array.reminder_hours_labels, android.R.layout.simple_spinner_dropdown_item);
         spinnerReminderHours.setAdapter(h);
+
+        tvAccountStatus = findViewById(R.id.tvAccountStatus);
+        buttonSignOut = findViewById(R.id.buttonSignOut);
+    }
+
+    private void bindAccountUi() {
+        if (tvAccountStatus == null || buttonSignOut == null) return;
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        if (user != null && user.getEmail() != null) {
+            tvAccountStatus.setText(getString(R.string.settings_signed_in_as) + "\n" + user.getEmail());
+            buttonSignOut.setVisibility(View.VISIBLE);
+        } else {
+            tvAccountStatus.setText(R.string.settings_not_signed_in);
+            buttonSignOut.setVisibility(View.GONE);
+        }
     }
 
     private void loadCurrentSettings() {
@@ -140,6 +170,14 @@ public class SettingsActivity extends BaseActivity {
 
             @Override
             public void onNothingSelected(android.widget.AdapterView<?> parent) { }
+        });
+
+        buttonSignOut.setOnClickListener(v -> {
+            FirebaseAuth.getInstance().signOut();
+            Intent intent = new Intent(SettingsActivity.this, AuthActivity.class);
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+            startActivity(intent);
+            finish();
         });
     }
 

@@ -1,7 +1,9 @@
 package com.flightsearch.app;
 
+import android.Manifest;
 import android.app.AlertDialog;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
@@ -16,6 +18,8 @@ import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.core.content.ContextCompat;
+import androidx.core.content.FileProvider;
 
 import com.bumptech.glide.Glide;
 import com.flightsearch.app.api.GeocodingResponse;
@@ -37,6 +41,7 @@ import com.google.android.material.button.MaterialButton;
 import com.google.android.material.card.MaterialCardView;
 import com.google.gson.Gson;
 
+import java.io.File;
 import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.ExecutorService;
@@ -61,6 +66,8 @@ public class FlightDetailsActivity extends BaseActivity {
     private TextView textViewDurationStops;
     private MaterialButton buttonSave;
     private MaterialButton buttonDelete;
+    private MaterialButton buttonShareFlight;
+    private MaterialButton buttonTakePhoto;
 
     private MaterialCardView cardTripExtras;
     private View layoutOfferExtras;
@@ -90,7 +97,10 @@ public class FlightDetailsActivity extends BaseActivity {
     private boolean isFromSaved;
 
     private Uri pendingImageUri;
+    private Uri cameraPhotoUri;
     private ActivityResultLauncher<String> pickImageLauncher;
+    private ActivityResultLauncher<Uri> takePictureLauncher;
+    private ActivityResultLauncher<String> requestCameraPermissionLauncher;
 
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
@@ -105,6 +115,19 @@ public class FlightDetailsActivity extends BaseActivity {
                 imagePreview.setVisibility(View.VISIBLE);
             }
         });
+        takePictureLauncher = registerForActivityResult(new ActivityResultContracts.TakePicture(), success -> {
+            if (success && cameraPhotoUri != null) {
+                pendingImageUri = cameraPhotoUri;
+                if (imagePreview != null) {
+                    imagePreview.setImageURI(cameraPhotoUri);
+                    imagePreview.setVisibility(View.VISIBLE);
+                }
+            }
+        });
+        requestCameraPermissionLauncher = registerForActivityResult(
+                new ActivityResultContracts.RequestPermission(), granted -> {
+                    if (granted) launchCameraCapture();
+                });
         setContentView(R.layout.activity_flight_details);
 
         if (getSupportActionBar() != null) {
@@ -131,6 +154,8 @@ public class FlightDetailsActivity extends BaseActivity {
         textViewDurationStops = findViewById(R.id.textViewDurationStops);
         buttonSave            = findViewById(R.id.buttonSave);
         buttonDelete          = findViewById(R.id.buttonDelete);
+        buttonShareFlight     = findViewById(R.id.buttonShareFlight);
+        buttonTakePhoto       = findViewById(R.id.buttonTakePhoto);
 
         cardTripExtras        = findViewById(R.id.cardTripExtras);
         layoutOfferExtras     = findViewById(R.id.layoutOfferExtras);
@@ -245,6 +270,58 @@ public class FlightDetailsActivity extends BaseActivity {
         buttonSave.setOnClickListener(v -> saveFlight());
         buttonDelete.setOnClickListener(v -> confirmDelete());
         buttonAttachImage.setOnClickListener(v -> pickImageLauncher.launch("image/*"));
+        if (buttonTakePhoto != null) {
+            buttonTakePhoto.setOnClickListener(v -> maybeOpenCamera());
+        }
+        if (buttonShareFlight != null) {
+            buttonShareFlight.setOnClickListener(v -> shareFlightText());
+        }
+    }
+
+    private void maybeOpenCamera() {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
+                != PackageManager.PERMISSION_GRANTED) {
+            requestCameraPermissionLauncher.launch(Manifest.permission.CAMERA);
+            return;
+        }
+        launchCameraCapture();
+    }
+
+    private void launchCameraCapture() {
+        try {
+            File f = new File(getCacheDir(), "flight_capture_" + System.currentTimeMillis() + ".jpg");
+            cameraPhotoUri = FileProvider.getUriForFile(this,
+                    getPackageName() + ".fileprovider", f);
+            takePictureLauncher.launch(cameraPhotoUri);
+        } catch (Exception e) {
+            Toast.makeText(this, R.string.camera_error, Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void shareFlightText() {
+        String text = buildShareText();
+        Intent send = new Intent(Intent.ACTION_SEND);
+        send.setType("text/plain");
+        send.putExtra(Intent.EXTRA_TEXT, text);
+        startActivity(Intent.createChooser(send, getString(R.string.share_flight)));
+    }
+
+    private String buildShareText() {
+        if (isFromSaved && currentSaved != null) {
+            return getString(R.string.share_flight_template,
+                    nvl(currentSaved.getFromCity(), "?"),
+                    nvl(currentSaved.getToCity(), "?"),
+                    nvl(currentSaved.getDepartureDate(), "—"),
+                    nvl(currentSaved.getPrice(), "—"));
+        }
+        if (currentOffer != null) {
+            return getString(R.string.share_flight_template,
+                    nvl(currentOffer.getFromCity(), "?"),
+                    nvl(currentOffer.getToCity(), "?"),
+                    nvl(currentOffer.getDepartureDate(), "—"),
+                    nvl(currentOffer.getFormattedPrice(), "—"));
+        }
+        return getString(R.string.app_name);
     }
 
     private void saveFlight() {

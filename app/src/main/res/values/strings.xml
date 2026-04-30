@@ -129,4 +129,37 @@
     <string name="chip_cat_leisure">Leisure</string>
     <string name="chip_cat_business">Business</string>
     <string name="chip_cat_family">Family</string>
+
+    <!-- Firebase Auth -->
+    <string name="auth_title">Sign in</string>
+    <string name="auth_subtitle">Create an account or sign in to sync saved flights with Firestore.</string>
+    <string name="auth_email">Email</string>
+    <string name="auth_password">Password</string>
+    <string name="auth_sign_in">Sign in</string>
+    <string name="auth_register">Register</string>
+    <string name="auth_fill_fields">Enter email and password</string>
+    <string name="auth_password_length">Password must be at least 6 characters</string>
+    <string name="auth_registered">Account created</string>
+    <string name="auth_failed">Authentication failed</string>
+    <string name="settings_account">Account</string>
+    <string name="settings_signed_in_as">Signed in as</string>
+    <string name="settings_not_signed_in">Not signed in</string>
+    <string name="sign_out">Sign out</string>
+
+    <!-- Real-time + device APIs -->
+    <string name="device_apis_title">Device</string>
+    <string name="accelerometer_label">Accelerometer (m/s²)</string>
+    <string name="accelerometer_unavailable">Accelerometer not available on this device</string>
+    <string name="accelerometer_waiting">Tilt the device…</string>
+    <string name="accelerometer_values">x: %1$.2f · y: %2$.2f · z: %3$.2f</string>
+    <string name="location_label">Location</string>
+    <string name="location_tap_button">Tap the button to read GPS coordinates</string>
+    <string name="location_unavailable">Location unavailable</string>
+    <string name="use_location_for_from">Use location for “From”</string>
+
+    <!-- Share + camera -->
+    <string name="share_flight">Share</string>
+    <string name="share_flight_template">%1$s → %2$s\nDate: %3$s\nPrice: %4$s</string>
+    <string name="take_photo">Take photo</string>
+    <string name="camera_error">Could not open camera</string>
 </resources>

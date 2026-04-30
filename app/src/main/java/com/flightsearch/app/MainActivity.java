@@ -39,12 +39,16 @@ import com.google.android.material.chip.ChipGroup;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.gson.Gson;
+import com.flightsearch.app.remote.RemoteFlightRepository;
+import com.google.firebase.firestore.ListenerRegistration;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 public class MainActivity extends BaseActivity {
 
@@ -85,6 +89,9 @@ public class MainActivity extends BaseActivity {
 
     private int offerSortIndex;
     private int savedSortIndex;
+
+    private ListenerRegistration firestoreSavedListener;
+    private final List<FlightSearch> lastRemoteSaved = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -372,6 +379,59 @@ public class MainActivity extends BaseActivity {
         applySavedFilters();
     }
 
+    /**
+     * Merges SQLite saved flights with Firestore snapshot (remote wins on same localId).
+     */
+    private void mergeRemoteWithLocal(List<FlightSearch> remote) {
+        List<FlightSearch> local = databaseHelper.getAllSearches();
+        if (local == null) local = new ArrayList<>();
+        Map<Long, FlightSearch> byId = new LinkedHashMap<>();
+        for (FlightSearch f : local) {
+            byId.put(f.getId(), f);
+        }
+        if (remote != null) {
+            for (FlightSearch r : remote) {
+                if (r.getId() > 0) {
+                    byId.put(r.getId(), r);
+                }
+            }
+        }
+        allSavedCached = new ArrayList<>(byId.values());
+        applySavedFilters();
+    }
+
+    private void attachFirestoreSavedListener() {
+        detachFirestoreSavedListener();
+        String uid = RemoteFlightRepository.currentUserId();
+        if (uid == null) return;
+        firestoreSavedListener = RemoteFlightRepository.listenUserSavedFlights(this, uid, remote -> {
+            lastRemoteSaved.clear();
+            if (remote != null) lastRemoteSaved.addAll(remote);
+            mergeRemoteWithLocal(lastRemoteSaved);
+        });
+    }
+
+    private void detachFirestoreSavedListener() {
+        if (firestoreSavedListener != null) {
+            firestoreSavedListener.remove();
+            firestoreSavedListener = null;
+        }
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        if (RemoteFlightRepository.currentUserId() != null) {
+            attachFirestoreSavedListener();
+        }
+    }
+
+    @Override
+    protected void onStop() {
+        detachFirestoreSavedListener();
+        super.onStop();
+    }
+
     private void showNote(String text) {
         TextView tv = cardCacheNote.findViewById(R.id.tvCacheNote);
         if (tv != null) tv.setText(text);
@@ -386,6 +446,11 @@ public class MainActivity extends BaseActivity {
     protected void onResume() {
         super.onResume();
         viewModel.checkNetworkStatus();
-        loadSavedFlights();
+        if (RemoteFlightRepository.currentUserId() == null) {
+            lastRemoteSaved.clear();
+            mergeRemoteWithLocal(null);
+        } else {
+            mergeRemoteWithLocal(lastRemoteSaved);
+        }
     }
 }
